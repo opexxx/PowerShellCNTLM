@@ -29,6 +29,7 @@
   </PropertyGroup>
   <ItemGroup />
   <ItemGroup>
+    <Compile Include="Install.ps1" />
     <Compile Include="PowerShellCntlm.psd1" />
     <Compile Include="PowerShellCntlm.psm1" />
     <Compile Include="PowerShellCntlm.tests.ps1" />

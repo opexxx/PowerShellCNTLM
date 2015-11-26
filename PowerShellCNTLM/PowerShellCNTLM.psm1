@@ -1,3 +1,7 @@
+function Get-CntlmHome {
+	$env:CNTLM_HOME
+}
+
 <#
 .Synopsis
 	Install CNTLM
@@ -26,4 +30,17 @@ function Install-Cntlm {
 function Install-CntlmService {
 
 
+}
+
+function Start-CntlmService{
+
+}
+
+function Start-Cntlm{
+	[CmdletBinding()]
+	param(
+		[string]$ConfigFilePath
+	)
+
+	Write-Error 'Not Implemented!!!!'
 }
