@@ -18,6 +18,17 @@ function Expand-ZIPFile($file, $destination) {
 	}
 }
 
+function PreparePath{
+	param([string]$Path)
+
+	$File = [System.IO.FileInfo]::new($Path)
+	if(!(Test-Path $File.DirectoryName)){
+		$null = mkdir $File.DirectoryName
+	}
+
+	$Path
+}
+
 function Get-CNTLM {
 	param([string]$CntlmInstallDirectory)
 
@@ -26,6 +37,7 @@ function Get-CNTLM {
 		$null = mkdir $CntlmInstallDirectory
 	}
 
+	[System.IO.Path]::GetTempPath()
 	$downloadsFolder = Join-Path  -Path $CntlmInstallDirectory -ChildPath '.downloads'
 
 	if(!(Test-Path $downloadsFolder)){
@@ -54,9 +66,46 @@ function Get-PowerShellCNTLM {
 		$null = mkdir $InstallDirectory
 	}	
 
-	$downloadLink = "http://downloads.sourceforge.net/project/cntlm/cntlm/cntlm%200.92.3/cntlm-0.92.3-win32.zip?r=http%3A%2F%2Fsourceforge.net%2Fprojects%2Fcntlm%2Ffiles%2Fcntlm%2Fcntlm%25200.92.3%2F&ts=1448561446&use_mirror=skylineservers"
+	$moduleFiles = @(
+		@{'Dir'='PowerShellCNTLM';'FileName'='PowerShellCNTLM.psd1'},
+		@{'Dir'='PowerShellCNTLM'; 'FileName'='PowerShellCNTLM.psm1'},
+		@{'Dir'=''; 'FileName'='ReadMe.md'},
+		@{'Dir'=''; 'FileName'='License.txt'}
+	)
+	$downloadLink = "https://raw.githubusercontent.com/DamianReeves/PowerShellCNTLM/master"
 	$wc = New-Object System.Net.WebClient
-	$wc.DownloadFile($downloadLink,"$InstallDirectory\cntlm-0.92.3-win32.zip")
+
+	Write-Progress -Activity "Downloading PowerShellCNTLM module..." -Status "Starting..." -PercentComplete 0
+	$totalFiles = $moduleFiles.Count
+	for ($i = 0; $i -lt $totalFiles; $i++){
+		$idx = $i +1
+		$file = $moduleFiles[$i]
+		$filename = $file.FileName
+		$directory = $file.Dir
+		
+
+		if ([string]::IsNullOrEmpty($file.Dir)) {
+			$fullLink = "$downloadLink/$filename"
+			$targetPath = PreparePath  -Path "$InstallDirectory\$filename"
+		} else {
+			$fullLink = "$downloadLink/$directory/$filename"
+			$targetPath = PreparePath  -Path "$InstallDirectory\$filename"
+		}
+
+		Write-Progress `
+			-Activity "Downloading PowerShellCNTLM module..." `
+			-Status "Downloading $idx of $totalFiles - $fullLink..." `
+			-PercentComplete ($i * (100/$totalFiles))
+
+		$wc.DownloadFile("$fullLink",$targetPath)
+
+		[System.Threading.Thread]::Sleep(2000)
+		Write-Progress `
+			-Activity "Downloading PowerShellCNTLM module..." `
+			-Status "Downloaded $idx of $totalFiles" `
+			-PercentComplete ($idx * (100/$totalFiles))
+	}
+	
 }
 
 function Set-CNTLMHome {
@@ -110,3 +159,4 @@ if ($CNTLMHome -eq ''){
 if($DownloadCNTLM){
 	Get-CNTLM $CNTLMHome
 }
+Get-PowerShellCNTLM  $InstallDirectory
